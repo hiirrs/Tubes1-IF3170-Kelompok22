@@ -94,91 +94,6 @@ class MagicCube:
         new_cube.layer_sums = np.copy(self.layer_sums)
         return new_cube
 
-class SidewaysMove:
-    def __init__(self, initial_cube):
-        self.cube = initial_cube
-
-    def get_neighbor(self):
-        best_neighbor = None
-        _, best_error_count = self.cube.calculate_objective_value()
-
-        for i1 in range(self.cube.n):
-            for j1 in range(self.cube.n):
-                for k1 in range(self.cube.n):
-                    for i2 in range(self.cube.n):
-                        for j2 in range(self.cube.n):
-                            for k2 in range(self.cube.n):
-                                if (i1, j1, k1) != (i2, j2, k2):
-                                    neighbor = self.cube.copy()
-                                    neighbor.swap(i1, j1, k1, i2, j2, k2)
-
-                                    _, neighbor_error_count = neighbor.calculate_objective_value()
-
-                                    if neighbor_error_count <= best_error_count:
-                                        best_neighbor = neighbor
-                                        best_error_count = neighbor_error_count          
-
-        return best_neighbor
-
-    def hill_climb(self):
-        start_time = time.time()
-        i = 0
-        while True:
-            print(f"Iteration {i}")
-            best_cost, best_error_count = self.cube.calculate_objective_value()
-            print(f"Best cost: {self.cube.calculate_objective_value()}")
-
-            neighbor = self.get_neighbor()
-            if not neighbor or (neighbor.calculate_objective_value()[0] > best_cost and neighbor.calculate_objective_value()[1] > best_error_count):
-                break
-
-            self.cube = neighbor
-            i += 1
-
-        end_time = time.time()
-        duration = end_time - start_time
-        final_cost, final_error_count = self.cube.calculate_objective_value()
-        return self.cube, final_cost, final_error_count, duration
-
-class StochasticHillClimb:
-    def __init__(self, initial_cube, max_attempts=100):
-        self.cube = initial_cube
-        self.max_attempts = max_attempts 
-        
-    def get_random_neighbor(self):
-        i1, j1, k1 = random.randint(0, self.cube.n - 1), random.randint(0, self.cube.n - 1), random.randint(0, self.cube.n - 1)
-        i2, j2, k2 = random.randint(0, self.cube.n - 1), random.randint(0, self.cube.n - 1), random.randint(0, self.cube.n - 1)
- 
-        while (i1, j1, k1) == (i2, j2, k2):
-            i2, j2, k2 = random.randint(0, self.cube.n - 1), random.randint(0, self.cube.n - 1), random.randint(0, self.cube.n - 1)
-
-        neighbor = self.cube.copy()
-        neighbor.swap(i1, j1, k1, i2, j2, k2)
-        return neighbor
-
-    def hill_climb(self):
-        start_time = time.time()
-        attempts = 0
-
-        while attempts < self.max_attempts:
-            current_cost = self.cube.calculate_objective_value()
-            print(f"Current Cost: {current_cost}, Attempts: {attempts}")
-            
-            neighbor = self.get_random_neighbor()
-            neighbor_cost = neighbor.calculate_objective_value()
-
-            print(f"Neighbor Cost: {neighbor_cost}")
-
-            if neighbor_cost < current_cost:
-                self.cube = neighbor  
-                attempts = 0
-            else:
-                attempts += 1 
-
-        end_time = time.time()
-        duration = end_time - start_time
-        return self.cube, self.cube.calculate_objective_value(), duration
-
 class SteepestAscent:
     def __init__(self, initial_cube):
         self.cube = initial_cube
@@ -228,43 +143,12 @@ class SteepestAscent:
         final_cost, final_error_count = self.cube.calculate_objective_value()
         return self.cube, final_cost, final_error_count, duration
 
-class RandomRestartHillClimb:
-    def __init__(self, n_restarts=10000):
-        self.n_restarts = n_restarts
-
-    def hill_climb(self):
-        best_solution = None
-        best_cost = float('inf')
-        best_error_count = float('inf')
-        total_duration = 0
-
-        for restart in range(self.n_restarts):
-            print(f"\nRandom Restart {restart + 1}/{self.n_restarts}")
-            initial_cube = MagicCube(5)
-            steepest_ascent = SteepestAscent(initial_cube)
-
-            solution, cost, error_count, duration = steepest_ascent.hill_climb()
-            total_duration += duration
-
-            if error_count < best_error_count or (error_count == best_error_count and cost < best_cost):
-                best_solution = solution
-                best_cost = cost
-                best_error_count = error_count
-
-            print(f"Restart {restart + 1}: Cost = {cost}, Error Count = {error_count}, Duration = {duration} seconds")
-
-        return best_solution, best_cost, best_error_count, total_duration
-
 def run_with_custom_cube(custom_cube):
     n = custom_cube.shape[0]
     initial_cube = MagicCube(n, cube=custom_cube)
-    # shc = StochasticHillClimb(initial_cube)
-    rrhc = RandomRestartHillClimb(n_restarts=100)
-    # shc = SidewaysMove(initial_cube)
-    # shc = SteepestAscent(initial_cube)
-    best_solution, best_cost, total_duration = rrhc.hill_climb()
-    # best_solution, best_cost, duration = shc.hill_climb()
-    return best_solution, best_cost, total_duration
+    sa = SteepestAscent(initial_cube)
+    best_solution, best_cost, best_error_count, duration = sa.hill_climb()
+    return best_solution, best_cost, best_error_count, duration
 
 custom_input = np.array([
     [[110,  51, 109,  81,  26],
@@ -330,8 +214,41 @@ test_solution = np.array([
      [36, 110, 46, 22, 101]]
 ])
 
-best_solution, best_cost, duration = run_with_custom_cube(test_solution)
+solution_swap = np.array([
+       [[  5,  16,  80, 104,  90],
+        [115,  98,   4,   1,  97],
+        [ 42, 111,  85,   2,  75],
+        [ 66,  72,  27, 102,  48],
+        [ 67,  18, 119, 106,  25]],
+
+       [[ 91,  77,  71,   6,  70],
+        [ 52,  64, 117,  69,  13],
+        [ 30,  21, 118, 123,  23],
+        [ 26,  39,  92,  44, 114],
+        [116,  17,  14,  73,  95]],
+
+       [[ 47,  61,  45,  76,  86],
+        [107,  43,  38,  33,  94],
+        [ 89,  68,  63,  58,  37],
+        [ 32,  93,  88,  83,  19],
+        [ 40,  50,  81,  65,  79]],
+
+       [[ 31,  53, 112, 109,  10],
+        [ 12,  82,  34,  87,  99],
+        [103,   3, 105,   8,  96],
+        [113,  57,   9,  62,  74],
+        [ 56, 120,  55,  49,  35]],
+
+       [[121, 108,   7,  20,  59],
+        [ 29,  28, 122, 125,  11],
+        [ 51,  15,  41, 124,  84],
+        [ 78,  54, 100,  24,  60],
+        [ 36, 110,  46,  22, 101]]
+])
+
+best_solution, best_cost, best_error_count, duration = run_with_custom_cube(custom_input)
 print("Optimized Cube:")
 print(best_solution.cube)
 print(f"Best Cost: {best_cost}")
+print(f"Best Error Count: {best_error_count}")
 print(f"Duration: {duration:.2f} seconds")
