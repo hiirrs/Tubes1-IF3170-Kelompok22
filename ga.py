@@ -87,6 +87,10 @@ class MagicCube:
 
         return total_error, total_error_count
 
+    def fitness(self):
+        total_error, _ = self.calculate_objective_value()
+        return 1 / (1 + total_error)  
+
     def copy(self):
         new_cube = MagicCube(self.n, np.copy(self.cube))
         new_cube.row_sums = np.copy(self.row_sums)
@@ -106,12 +110,12 @@ class GeneticAlgorithm:
         start_time = time.time()
         initial_cube = self.population[0].cube.copy()  
         for iteration in range(self.max_iterations):
-            objective_values = [cube.calculate_objective_value()[0] for cube in self.population]
-            max_objective = max(objective_values)
-            avg_objective = sum(objective_values) / len(objective_values)
+            fitness_values = [cube.fitness() for cube in self.population]
+            max_fitness = max(fitness_values)
+            avg_fitness = sum(fitness_values) / len(fitness_values)
 
-            self.objective_log.append((iteration, max_objective, avg_objective))
-            self.population = self.selection(objective_values)
+            self.objective_log.append((iteration, max_fitness, avg_fitness))
+            self.population = self.selection(fitness_values)
             self.population = self.crossover_and_mutate(self.population)
 
         end_time = time.time()
@@ -131,17 +135,17 @@ class GeneticAlgorithm:
         iterations, max_values, avg_values = zip(*self.objective_log)
         
         plt.figure(figsize=(10, 5))
-        plt.plot(iterations, max_values, label='Max Objective Value', marker='o')
-        plt.plot(iterations, avg_values, label='Average Objective Value', marker='x')
-        plt.title('Objective Function Values Over Iterations')
+        plt.plot(iterations, max_values, label='Max Fitness Value', marker='o')
+        plt.plot(iterations, avg_values, label='Average Fitness Value', marker='x')
+        plt.title('Fitness Values Over Iterations')
         plt.xlabel('Iteration')
-        plt.ylabel('Objective Function Value')
+        plt.ylabel('Fitness Value')
         plt.legend()
         plt.grid(True)
         plt.show()
 
-    def selection(self, objective_values):
-        selected_population = sorted(self.population, key=lambda cube: cube.calculate_objective_value()[0])
+    def selection(self, fitness_values):
+        selected_population = sorted(self.population, key=lambda cube: cube.fitness(), reverse=True)
         return selected_population[:self.population_size // 2]
 
     def crossover_and_mutate(self, selected_population):
