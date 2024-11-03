@@ -153,10 +153,10 @@ class SidewaysMove:
         final_cost, final_error_count = self.cube.calculate_objective_value()
         return self.cube, final_cost, final_error_count, duration
 
-class StochasticHillClimb:
-    def __init__(self, initial_cube, max_attempts=1000):
+class Stochastic:
+    def __init__(self, initial_cube, max_iteration=50000):
         self.cube = initial_cube
-        self.max_attempts = max_attempts 
+        self.max_iteration = max_iteration
         
     def get_random_neighbor(self):
         i1, j1, k1 = random.randint(0, self.cube.n - 1), random.randint(0, self.cube.n - 1), random.randint(0, self.cube.n - 1)
@@ -171,11 +171,11 @@ class StochasticHillClimb:
 
     def hill_climb(self):
         start_time = time.time()
-        attempts = 0
+        iteration = 0
 
-        while attempts < self.max_attempts:
+        while iteration < self.max_iteration:
             current_cost = self.cube.calculate_objective_value()
-            print(f"Current Cost: {current_cost}, Attempts: {attempts}")
+            print(f"Current Cost: {current_cost}, Iteration: {iteration}")
             
             neighbor = self.get_random_neighbor()
             neighbor_cost = neighbor.calculate_objective_value()
@@ -184,13 +184,12 @@ class StochasticHillClimb:
 
             if neighbor_cost < current_cost:
                 self.cube = neighbor  
-                attempts = 0
-            else:
-                attempts += 1 
+            
+            iteration += 1
 
         end_time = time.time()
         duration = end_time - start_time
-        return self.cube, self.cube.calculate_objective_value(), duration
+        return self.cube, self.cube.calculate_objective_value()[0], self.cube.calculate_objective_value()[1], duration
 
 class SteepestAscent:
     def __init__(self, initial_cube):
@@ -241,9 +240,10 @@ class SteepestAscent:
         final_cost, final_error_count = self.cube.calculate_objective_value()
         return self.cube, final_cost, final_error_count, duration
 
-class RandomRestartHillClimb:
-    def __init__(self, n_restarts=10000):
+class RandomRestart:
+    def __init__(self, n_restarts=10, max_iteration=500):
         self.n_restarts = n_restarts
+        self.max_iteration = max_iteration
 
     def hill_climb(self):
         best_solution = None
@@ -254,9 +254,9 @@ class RandomRestartHillClimb:
         for restart in range(self.n_restarts):
             print(f"\nRandom Restart {restart + 1}/{self.n_restarts}")
             initial_cube = MagicCube(5)
-            steepest_ascent = SteepestAscent(initial_cube)
+            shc = Stochastic(initial_cube, max_iteration=self.max_iteration)
 
-            solution, cost, error_count, duration = steepest_ascent.hill_climb()
+            solution, cost, error_count, duration = shc.hill_climb()
             total_duration += duration
 
             if error_count < best_error_count or (error_count == best_error_count and cost < best_cost):
@@ -271,12 +271,12 @@ class RandomRestartHillClimb:
 def run_with_custom_cube(custom_cube):
     n = custom_cube.shape[0]
     initial_cube = MagicCube(n, cube=custom_cube)
-    shc = StochasticHillClimb(initial_cube)
-    rrhc = RandomRestartHillClimb(n_restarts=100)
+    shc = Stochastic(initial_cube)
+    rrhc = RandomRestart(max_iteration=500)
     smhc = SidewaysMove(initial_cube)
     sahc = SteepestAscent(initial_cube)
-    best_solution, best_cost, total_duration = shc.hill_climb()
-    return best_solution, best_cost, total_duration
+    best_solution, best_cost, best_error_count, total_duration = rrhc.hill_climb()
+    return best_solution, (best_cost, best_error_count), total_duration
 
 custom_input = np.array([
     [[110,  51, 109,  81,  26],
