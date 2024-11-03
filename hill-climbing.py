@@ -1,7 +1,6 @@
-import numpy as np # type: ignore
+import numpy as np
 import random
 import time
-from concurrent.futures import ThreadPoolExecutor
 
 class MagicCube:
     def __init__(self, n, cube=None):
@@ -83,10 +82,24 @@ class MagicCube:
                 total_error += depth_anti_diagonal_error
                 diagonal_error_count += 1
 
-        total_error_count = row_error_count + col_error_count + layer_error_count + diagonal_error_count
+        ruang_diagonals = [
+            self.cube[range(self.n), range(self.n), range(self.n)].sum(),
+            self.cube[range(self.n), range(self.n), range(self.n-1, -1, -1)].sum(),
+            self.cube[range(self.n), range(self.n-1, -1, -1), range(self.n)].sum(),
+            self.cube[range(self.n), range(self.n-1, -1, -1), range(self.n-1, -1, -1)].sum()
+        ]
+
+        ruang_error_count = 0
+        for ruang_diagonal_sum in ruang_diagonals:
+            ruang_error = abs(ruang_diagonal_sum - self.magic_number)
+            if ruang_error > 0:
+                total_error += ruang_error
+                ruang_error_count += 1
+
+        total_error_count = row_error_count + col_error_count + layer_error_count + diagonal_error_count + ruang_error_count
 
         return total_error, total_error_count
-
+    
     def copy(self):
         new_cube = MagicCube(self.n, np.copy(self.cube))
         new_cube.row_sums = np.copy(self.row_sums)
@@ -129,7 +142,7 @@ class SidewaysMove:
             print(f"Best cost: {self.cube.calculate_objective_value()}")
 
             neighbor = self.get_neighbor()
-            if not neighbor or (neighbor.calculate_objective_value()[0] > best_cost and neighbor.calculate_objective_value()[1] > best_error_count):
+            if not neighbor or (neighbor.calculate_objective_value()[1] > best_error_count):
                 break
 
             self.cube = neighbor
@@ -141,7 +154,7 @@ class SidewaysMove:
         return self.cube, final_cost, final_error_count, duration
 
 class StochasticHillClimb:
-    def __init__(self, initial_cube, max_attempts=100):
+    def __init__(self, initial_cube, max_attempts=1000):
         self.cube = initial_cube
         self.max_attempts = max_attempts 
         
@@ -258,12 +271,11 @@ class RandomRestartHillClimb:
 def run_with_custom_cube(custom_cube):
     n = custom_cube.shape[0]
     initial_cube = MagicCube(n, cube=custom_cube)
-    # shc = StochasticHillClimb(initial_cube)
+    shc = StochasticHillClimb(initial_cube)
     rrhc = RandomRestartHillClimb(n_restarts=100)
-    # shc = SidewaysMove(initial_cube)
-    # shc = SteepestAscent(initial_cube)
-    best_solution, best_cost, total_duration = rrhc.hill_climb()
-    # best_solution, best_cost, duration = shc.hill_climb()
+    smhc = SidewaysMove(initial_cube)
+    sahc = SteepestAscent(initial_cube)
+    best_solution, best_cost, total_duration = shc.hill_climb()
     return best_solution, best_cost, total_duration
 
 custom_input = np.array([
@@ -330,7 +342,7 @@ test_solution = np.array([
      [36, 110, 46, 22, 101]]
 ])
 
-best_solution, best_cost, duration = run_with_custom_cube(test_solution)
+best_solution, best_cost, duration = run_with_custom_cube(custom_input)
 print("Optimized Cube:")
 print(best_solution.cube)
 print(f"Best Cost: {best_cost}")
