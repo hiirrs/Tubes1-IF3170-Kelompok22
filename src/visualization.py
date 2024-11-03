@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
 
 # Cube data
 cube = np.array([
@@ -36,29 +35,36 @@ cube = np.array([
      [51, 16, 30, 42, 29]]
 ])
 
+# Plot configuration
 fig = plt.figure(figsize=(20, 50))
 ax = fig.add_subplot(111, projection='3d')
 
+# Parameters for cube layout
 n = cube.shape[0]
 cube_size = 1.0
-layer_spacing = 120.0  
+layer_spacing = 50000.0  # Adjusted to add more space between layers
 cube_height = 40.0 
 
-colors =['#ffcccc', '#cce5ff', '#ccffcc', '#ffe6cc', '#e6e6fa']
+# Colors for each layer
+colors = ['#ffcccc', '#cce5ff', '#ccffcc', '#ffe6cc', '#e6e6fa']
 
+# Create each layer
 for z in range(n):
     for y in range(n):
         for x in range(n):
-
-            x_pos, y_pos, z_pos = x, y, z * layer_spacing + cube_height
+            x_pos, y_pos, z_pos = x, y, z * layer_spacing + cube_height  # Increased spacing between layers
+            z_pos *= 1.75
             face_color = colors[z]
 
+            # Draw the cube block
             ax.bar3d(x_pos, y_pos, z_pos, cube_size, cube_size, cube_height, color=face_color, alpha=0.15)
             
-            ax.text(x_pos + cube_size / 2, y_pos + cube_size / 2, z_pos + cube_height/2, 
+            # Add text in the middle of each block
+            ax.text(x_pos + cube_size / 2, y_pos + cube_size / 2, z_pos + cube_height / 2, 
                     str(cube[z, y, x]), ha='center', va='center', color="black", fontsize=6, weight='bold', 
                     bbox=dict(facecolor='white', edgecolor='none', boxstyle='round,pad=0.3'))
 
+# Set axis labels and limits
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
 ax.set_zlabel('Layer (Z)')
@@ -66,8 +72,9 @@ ax.set_xlim(-0.5, n - 0.5)
 ax.set_ylim(-0.5, n - 0.5)
 ax.set_zlim(-0.5, n * layer_spacing + cube_height)
 
-
+# View angle
 ax.view_init(elev=20, azim=30)
 
+# Title and display
 plt.title("3D Visualization of The 5x5x5 Magic Cube")
 plt.show()
