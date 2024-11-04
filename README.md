@@ -14,12 +14,12 @@ This project implements various optimization algorithms, including Simulated Ann
 
 ## Contributors
 ### **Kelompok 22**
-|   NIM    |                  Nama                  |
-| :------: | :------------------------------------: |
-| 13522063 |         Shazya Audrea Taufik           |
-| 13522070 |           Marzuli Suhada M             |
-| 13522085 |          Zahira Dina Amalia            |
-| 13522108 |       Muhammad Neo Cicero Koda         |
+|   NIM    |                  Nama                |                 Tugas                 |
+| :------: | ------------------------------------ | --------------------------------------|
+| 13522063 |        Shazya Audrea Taufik          | Algoritma Simulated Annealing, Laporan|
+| 13522070 |          Marzuli Suhada M            | Algoritma Genetic, Laporan            |
+| 13522085 |         Zahira Dina Amalia           | Algoritma Hill-Climbing, Laporan      |
+| 13522108 |      Muhammad Neo Cicero Koda        | Algoritma Hill-Climbing, Laporan      |
 
 
 ## Features
